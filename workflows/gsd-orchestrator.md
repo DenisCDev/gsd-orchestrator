@@ -94,11 +94,14 @@ Analise o input e classifique em UMA OU MAIS categorias:
 | `DEBUG` | "debugar", "investigar", "por que X" | "por que o build ta falhando?" |
 | `NOTE` | "anota", "lembra", "depois eu", "ideia" | "anota: preciso revisar as rotas" |
 | `RESEARCH` | "pesquisa", "como funciona", "qual a melhor forma" | "pesquisa como fazer SSR com streaming" |
-| `SHIP` | "deploy", "release", "ship", "publica" | "ta pronto, quero fazer deploy" |
+| `SHIP` | "deploy", "release", "ship", "publica", "PR", "pull request" | "ta pronto, quero fazer deploy" |
 | `AUTONOMOUS` | "faz tudo", "roda automatico", "sem parar" | "executa tudo que falta automaticamente" |
 | `MAP_CODEBASE` | "analisa o codigo", "mapeia o projeto", "entende a codebase" | "analisa esse repo que clonei" |
 | `MANAGE_PHASES` | "adiciona fase", "remove fase", "insere fase" | "adiciona uma fase de testes E2E" |
 | `SIDE_QUESTION` | pergunta rapida sobre estado, nao requer acao | "qual fase eu to?", "quantos planos tem?" |
+| `TRIVIAL_FIX` | "muda", "troca", "ajusta" + coisa minima, inline | "muda o titulo pra 'Dashboard'" |
+| `FORENSICS` | "por que isso aconteceu", "post-mortem", "o que causou" | "por que o deploy de ontem quebrou?" |
+| `NEXT_STEP` | "proximo", "next", "what's next" | "qual o proximo passo?" |
 
 **Modificadores (como o usuario quer):**
 
@@ -239,8 +242,29 @@ Se e uma tarefa futura → /gsd:add-todo "{texto}"
 
 **SHIP:**
 ```
-Estado: PHASE_COMPLETE → /gsd:complete-milestone
-Estado: NEEDS_VERIFY → /gsd:verify-work primeiro, depois sugerir complete
+Se usuario menciona "PR" ou "pull request" → /gsd:ship {N}
+Se usuario menciona "deploy" ou "release":
+  Estado: PHASE_COMPLETE → /gsd:ship {current} (cria PR primeiro)
+  Estado: MILESTONE_COMPLETE → /gsd:complete-milestone (archiva + tag)
+  Estado: NEEDS_VERIFY → /gsd:verify-work primeiro, depois sugerir ship
+```
+
+**TRIVIAL_FIX:**
+```
+→ /gsd:fast "{descricao}"
+(Sem subagents, inline, para coisas de 1 linha)
+```
+
+**FORENSICS:**
+```
+→ /gsd:forensics "{descricao}"
+(Post-mortem investigativo — diferente de debug que e para bug ativo)
+```
+
+**NEXT_STEP:**
+```
+→ /gsd:next
+(Auto-detecta estado e invoca o proximo comando correto)
 ```
 
 **AUTONOMOUS:**
@@ -392,7 +416,7 @@ Apos cada interacao bem-sucedida, avalie se houve um pattern novo:
 - Usuario escolheu add-phase 3x seguidas para features? → Atualizar preferences: `preferred_feature_approach: add-phase`
 - Usuario pediu worktree? → Anotar que usa worktrees
 
-**Para atualizar:** Use Edit tool no arquivo `C:/Users/rodri/.claude/skills/g/preferences.md`:
+**Para atualizar:** Use Edit tool no arquivo de preferences (localizado no mesmo diretorio do SKILL.md, tipicamente `~/.claude/skills/g/preferences.md`):
 - Adicione o pattern em "Learned Patterns" com data
 - Atualize o valor em "Defaults" se aplicavel
 
@@ -444,6 +468,19 @@ Quando o input e vago e NAO tem projeto:
 9. **Hooks sugeridos na primeira interacao:** Se o usuario nunca configurou hooks, mencione uma vez:
    "Dica: hooks automatizam tarefas repetitivas — auto-format apos edits, notificacoes desktop, protecao de arquivos sensiveis. Configure com `/gsd:settings` ou edite `.claude/settings.json`."
    So mencione isso UMA VEZ. Anote em preferences que ja sugeriu.
+
+10. **Screenshots para trabalho de UI:** Quando o intent envolve UI (frontend, design, layout, componentes visuais), lembre o usuario:
+    "Cole um screenshot (Ctrl+V) ou arraste a imagem pra ca — isso ajuda o Claude a entender exatamente o que precisa mudar."
+    So sugira quando o contexto for visual e o usuario nao tiver enviado imagem.
+
+11. **Plan Mode para exploracao:** Quando o intent e RESEARCH ou o usuario quer entender o codigo antes de mudar, sugira:
+    "Use Shift+Tab pra entrar em Plan Mode — Claude explora o codigo sem modificar nada."
+    Util para discuss-phase e research-phase onde exploracao read-only e o objetivo.
+
+12. **Trivial vs Quick vs Phase:** Calibre a ferramenta ao tamanho da tarefa:
+    - 1 linha / rename / config → `/gsd:fast` (sem subagents, inline)
+    - Tarefa pontual ate ~50 linhas → `/gsd:quick` (1 executor)
+    - Feature multi-arquivo → `/gsd:add-phase` + full cycle
 </best_practices>
 
 <success_criteria>

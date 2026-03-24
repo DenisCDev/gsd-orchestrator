@@ -22,12 +22,12 @@ allowed-tools:
 
 ## Dynamic Project State (pre-loaded)
 
-- Project init: !`node "C:/Users/rodri/.claude/get-shit-done/bin/gsd-tools.cjs" init progress 2>/dev/null || echo '{"project_exists":false}'`
-- Roadmap analysis: !`node "C:/Users/rodri/.claude/get-shit-done/bin/gsd-tools.cjs" roadmap analyze 2>/dev/null || echo '{}'`
-- State snapshot: !`node "C:/Users/rodri/.claude/get-shit-done/bin/gsd-tools.cjs" state-snapshot 2>/dev/null || echo '{}'`
+- Project init: !`node "$HOME/.claude/get-shit-done/bin/gsd-tools.cjs" init progress 2>/dev/null || echo '{"project_exists":false}'`
+- Roadmap analysis: !`node "$HOME/.claude/get-shit-done/bin/gsd-tools.cjs" roadmap analyze 2>/dev/null || echo '{}'`
+- State snapshot: !`node "$HOME/.claude/get-shit-done/bin/gsd-tools.cjs" state-snapshot 2>/dev/null || echo '{}'`
 - Paused work: !`ls .planning/continue-here.md 2>/dev/null && echo "HAS_PAUSED_WORK" || echo "NO_PAUSED_WORK"`
 - Debug sessions: !`ls .planning/debug/*.md 2>/dev/null | grep -v resolved | head -3 || echo "NO_DEBUG_SESSIONS"`
-- Orchestrator preferences: !`cat "C:/Users/rodri/.claude/skills/g/preferences.md" 2>/dev/null || echo "No preferences yet"`
+- Orchestrator preferences: !`cat "${CLAUDE_SKILL_DIR}/preferences.md" 2>/dev/null || echo "No preferences yet"`
 
 ## User Input
 
@@ -35,6 +35,6 @@ $ARGUMENTS
 
 ## Execution
 
-@C:/Users/rodri/.claude/workflows/gsd-orchestrator.md
+@../../workflows/gsd-orchestrator.md
 
 Execute the orchestrator workflow end-to-end. The project state above is already loaded — skip the detect_state bash commands and parse directly from the pre-loaded data.
