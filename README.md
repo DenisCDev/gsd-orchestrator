@@ -8,26 +8,49 @@ Ao inves de decorar 57+ comandos GSD e saber a ordem correta, voce so fala o que
 
 | Voce fala | Orchestrator executa |
 |-----------|---------------------|
-| "continua de onde parei" | Detecta estado → `/gsd:resume-work` ou `/gsd:execute-phase` |
-| "tem um bug no login" | Avalia complexidade → `/gsd:debug` ou `/gsd:quick` |
-| "planeja e executa a fase 3" | `/gsd:discuss-phase 3` → `/gsd:plan-phase 3` → `/gsd:execute-phase 3` |
-| "adiciona autenticacao com Google" | Avalia scope → `/gsd:add-phase` ou `/gsd:quick` |
-| "como ta o projeto?" | `/gsd:progress` |
-| "faz tudo automatico" | `/gsd:autonomous` |
-| "qual fase eu to?" | Responde direto dos dados pre-carregados (zero overhead) |
+| "continua de onde parei" | Detecta estado → resume-work ou execute-phase |
+| "tem um bug no login" | Avalia complexidade → debug ou quick |
+| "planeja e executa a fase 3" | discuss → plan → execute (sequencia confirmada) |
+| "como ta o projeto?" | Responde direto dos dados pre-carregados |
+| "faz tudo automatico" | autonomous |
 
-## Diferenciais vs `/gsd:do`
+## Arquitetura: Dynamic Discovery (zero drift)
 
-| Feature | `/gsd:do` | `/g` |
-|---------|-----------|------|
-| Roteia para comando GSD | Single command | Multi-step workflows |
-| Detecta estado do projeto | Nao | Sim — pre-carregado via dynamic context injection |
-| Encadeia comandos | Nao | Sim — discuss → plan → execute |
-| Aprende preferencias | Nao | Sim — persistent preferences file |
-| Sugere verificacao | Nao | Sim — always after execute |
-| Sugere Writer/Reviewer | Nao | Sim — para mudancas criticas |
-| Side questions | Nao | Sim — responde sem invocar comandos |
-| Formato | Legacy commands/ | Modern skills/ (SKILL.md) |
+Diferente de uma routing table hardcoded, o orchestrator **descobre comandos em runtime**:
+
+```
+SKILL.md                              Workflow
+┌─────────────────────────┐           ┌──────────────────────┐
+│ !`scan gsd commands`    │──────────>│ Match user intent    │
+│ !`load project state`   │           │ against descriptions │
+│ !`read config.json`     │           │ (semantic, not       │
+│                         │           │  keyword-based)      │
+│ Available Commands:     │           │                      │
+│ - /gsd:do — Route...   │           │ Dispatch best match  │
+│ - /gsd:next — Auto...  │           └──────────────────────┘
+│ - /gsd:fast — Triv...  │
+│ - (auto-discovered)     │
+└─────────────────────────┘
+```
+
+**Quando o GSD atualiza** (npx get-shit-done-cc@latest):
+- Novos comandos aparecem automaticamente no registry
+- Comandos removidos desaparecem
+- Argumentos e descricoes refletem a versao atual
+- Zero manutencao no orchestrator
+
+## Diferenciais vs `/gsd:do` + `/gsd:next`
+
+| Feature | `/gsd:do` | `/gsd:next` | `/g` |
+|---------|-----------|-------------|------|
+| Texto livre → comando | Sim | Nao | Sim |
+| Auto-detecta estado | Nao | Sim | Sim |
+| Pre-carrega estado (0 turns) | Nao | Nao | Sim |
+| Encadeia multi-step | Nao | Nao | Sim |
+| Le config.json do GSD | Via workflow | Via workflow | Pre-loaded |
+| Side questions sem comando | Nao | Nao | Sim |
+| Sugere verificacao | Nao | Nao | Sim |
+| Sugere worktrees/screenshots | Nao | Nao | Sim |
 
 ## Instalacao
 
@@ -37,24 +60,13 @@ cd ~/.gsd-orchestrator
 bash install.sh
 ```
 
-Ou manualmente:
-```bash
-mkdir -p ~/.claude/skills/g ~/.claude/workflows
-cp skills/g/SKILL.md ~/.claude/skills/g/SKILL.md
-cp skills/g/preferences.md ~/.claude/skills/g/preferences.md
-cp workflows/gsd-orchestrator.md ~/.claude/workflows/gsd-orchestrator.md
-```
-
 ## Uso
-
-No Claude Code, digite:
 
 ```
 /g quero comecar o app de delivery
 /g continua
 /g tem um bug no formulario
 /g planeja e executa a fase 4
-/g anota: revisar as rotas depois
 /g qual fase eu to?
 ```
 
@@ -63,102 +75,55 @@ No Claude Code, digite:
 - [Claude Code](https://claude.com/claude-code)
 - [GSD](https://github.com/gsd-build/get-shit-done) instalado (`npx get-shit-done-cc@latest`)
 
-## Como funciona
-
-1. **Pre-load** — Dynamic context injection (`!`command``) carrega estado do projeto antes do prompt chegar ao Claude
-2. **Preferences** — Le preferencias aprendidas de interacoes anteriores
-3. **Classify** — Classifica a intencao (build, fix, plan, continue, etc.) + modificadores (fast, thorough, yolo)
-4. **Resolve** — Cruza intent + estado + preferences para sequencia otima de comandos
-5. **Guard** — Verifica pre-condicoes, sugere patterns avancados (worktrees, writer/reviewer)
-6. **Dispatch** — Invoca os comandos GSD na ordem correta
-7. **Orient** — Sugere proximo passo com enfase em verificacao
-8. **Learn** — Atualiza preferences silenciosamente baseado nos patterns do usuario
-
 ## Decisoes de Arquitetura
 
-As decisoes de design deste orchestrador foram baseadas nas best practices oficiais publicadas pela Anthropic:
+### Por que dynamic discovery?
 
-### Context Management com 1M tokens
+> O GSD evolui rapido (v1.25 → v1.28 em semanas). Uma routing table hardcoded diverge silenciosamente — roteia pra comandos que nao existem ou ignora comandos novos. A dynamic discovery elimina esse risco lendo `~/.claude/commands/gsd/*.md` em runtime.
 
-> *"Most best practices are based on one constraint: Claude's context window fills up fast, and performance degrades as it fills."*
+### Por que sem arquivo de preferencias separado?
 
-Com o contexto de 1M tokens, a estrategia muda: nao e necessario `/clear` ou `/compact` obsessivamente. A unica recomendacao e abrir novo chat quando mudar para uma **feature pesada completamente diferente**.
+> O GSD ja tem `.planning/config.json` com settings reais (`skip_discuss`, `auto_advance`, `model_profile`). Manter um `preferences.md` separado cria duas fontes de verdade que podem divergir. O orchestrator le o config.json do GSD diretamente.
 
-**Fonte:** [Claude Code Best Practices](https://code.claude.com/docs/en/best-practices)
+### Por que routing semantico em vez de keywords?
+
+> Claude e um LLM. Ele entende "fix the auth bug" e "tem um bug no login" igualmente bem. Dar a ele a lista de comandos com descricoes e deixar que faca matching semantico funciona em qualquer idioma, sem tabela de keywords.
+
+### Context strategy (1M tokens)
+
+> *"Most best practices are based on one constraint: Claude's context window fills up fast."* Com 1M de contexto, a unica recomendacao e novo chat para feature pesada completamente diferente. Sem /clear, sem /compact.
+>
+> — [Claude Code Best Practices](https://code.claude.com/docs/en/best-practices)
 
 ### Verificacao como pratica #1
 
 > *"Include tests, screenshots, or expected outputs so Claude can check itself. This is the single highest-leverage thing you can do."*
+>
+> — [Claude Code Best Practices](https://code.claude.com/docs/en/best-practices)
 
-O orchestrador sempre sugere verificacao apos execucao (`/gsd:verify-work` ou `/gsd:add-tests`).
+### Dynamic context injection
 
-**Fonte:** [Claude Code Best Practices](https://code.claude.com/docs/en/best-practices)
+> Skills usam `!`command`` para executar shell commands antes do conteudo chegar ao Claude.
+>
+> — [Extend Claude with Skills](https://code.claude.com/docs/en/skills)
 
-### Skills format (SKILL.md) com dynamic context injection
+### Writer/Reviewer com worktrees
 
-> Skills usam `!`command`` para executar shell commands antes do conteudo ser enviado ao Claude, injetando estado dinamico sem consumir turns.
+> *Uma sessao escreve, outra revisa com contexto fresco.*
+>
+> — [Common Workflows](https://code.claude.com/docs/en/common-workflows)
 
-O orchestrador pre-carrega `init progress`, `roadmap analyze`, e `state-snapshot` via dynamic injection, eliminando o custo de turns para detecao de estado.
-
-**Fonte:** [Extend Claude with Skills](https://code.claude.com/docs/en/skills) | [Introducing Agent Skills](https://claude.com/blog/skills)
-
-### Subagents para investigacao
-
-> *"Specialized sub-agents handle focused tasks with clean context windows while main agents coordinate high-level strategy."*
-
-O orchestrador delega pesquisa e exploracao para subagents (Explore, Research) mantendo o contexto principal limpo.
-
-**Fonte:** [Create Custom Subagents](https://code.claude.com/docs/en/sub-agents) | [Effective Context Engineering](https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents)
-
-### Writer/Reviewer pattern para mudancas criticas
-
-> *"Use git worktrees with `claude --worktree feature-auth` for isolated parallel sessions."* Uma sessao escreve, outra revisa com contexto fresco.
-
-Para refactors de auth, database, ou features criticas, o orchestrador sugere usar `claude -w <name>` em paralelo.
-
-**Fonte:** [Common Workflows](https://code.claude.com/docs/en/common-workflows)
-
-### Explore → Plan → Implement → Commit
-
-> O workflow de 4 fases recomendado pela Anthropic: explorar com Plan Mode, planejar, implementar, commitar.
-
-O GSD ja segue esse pattern (discuss → plan → execute → verify). O orchestrador garante a sequencia correta baseado no estado.
-
-**Fonte:** [Claude Code Best Practices](https://code.claude.com/docs/en/best-practices)
-
-### Hooks para automacao
-
-> Hooks automatizam tarefas repetitivas: auto-format apos edits, notificacoes desktop, protecao de arquivos sensiveis.
-
-O orchestrador sugere configuracao de hooks na primeira interacao.
-
-**Fonte:** [Automate Workflows with Hooks](https://code.claude.com/docs/en/hooks-guide)
-
-### Persistent memory / preferences
-
-> *"Combining memory with context editing yielded a 39% performance boost over baseline."*
-
-O orchestrador mantem um `preferences.md` que aprende patterns do usuario (pula discuss? prefere quick para bugs?) para roteamento cada vez mais preciso.
-
-**Fonte:** [Managing Context](https://claude.com/blog/context-management) | [CLAUDE.md and Memory](https://code.claude.com/docs/en/memory)
-
-## Todas as fontes oficiais consultadas
+## Fontes oficiais
 
 | Artigo | URL |
 |--------|-----|
 | Claude Code Best Practices | https://code.claude.com/docs/en/best-practices |
-| Effective Context Engineering for AI Agents | https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents |
-| How Anthropic Teams Use Claude Code | https://claude.com/blog/how-anthropic-teams-use-claude-code |
-| Introducing Agent Skills | https://claude.com/blog/skills |
-| Claude Code Plugins | https://claude.com/blog/claude-code-plugins |
-| Claude Code Sandboxing | https://www.anthropic.com/engineering/claude-code-sandboxing |
-| Automate Workflows with Hooks | https://code.claude.com/docs/en/hooks-guide |
-| Create Custom Subagents | https://code.claude.com/docs/en/sub-agents |
-| Managing Context on the Claude Developer Platform | https://claude.com/blog/context-management |
-| Claude Code Overview | https://code.claude.com/docs |
-| CLAUDE.md and Memory | https://code.claude.com/docs/en/memory |
-| Common Workflows | https://code.claude.com/docs/en/common-workflows |
+| Context Engineering for AI Agents | https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents |
 | Extend Claude with Skills | https://code.claude.com/docs/en/skills |
+| Custom Subagents | https://code.claude.com/docs/en/sub-agents |
+| Hooks Guide | https://code.claude.com/docs/en/hooks-guide |
+| Common Workflows | https://code.claude.com/docs/en/common-workflows |
+| CLAUDE.md and Memory | https://code.claude.com/docs/en/memory |
 
 ## Licenca
 

@@ -1,6 +1,6 @@
 ---
 name: g
-description: "GSD Orchestrator — fale naturalmente, receba eficiencia maxima do GSD. Detecta estado do projeto, classifica intencao, encadeia comandos, aplica best practices."
+description: "GSD Orchestrator — fale naturalmente, receba eficiencia maxima do GSD. Descobre comandos dinamicamente, zero drift de versao."
 argument-hint: "<o que voce quer fazer, em linguagem natural>"
 allowed-tools:
   - Read
@@ -20,21 +20,31 @@ allowed-tools:
   - TaskUpdate
 ---
 
-## Dynamic Project State (pre-loaded)
+## GSD Installation
 
-- Project init: !`node "$HOME/.claude/get-shit-done/bin/gsd-tools.cjs" init progress 2>/dev/null || echo '{"project_exists":false}'`
-- Roadmap analysis: !`node "$HOME/.claude/get-shit-done/bin/gsd-tools.cjs" roadmap analyze 2>/dev/null || echo '{}'`
-- State snapshot: !`node "$HOME/.claude/get-shit-done/bin/gsd-tools.cjs" state-snapshot 2>/dev/null || echo '{}'`
-- Paused work: !`ls .planning/continue-here.md 2>/dev/null && echo "HAS_PAUSED_WORK" || echo "NO_PAUSED_WORK"`
-- Debug sessions: !`ls .planning/debug/*.md 2>/dev/null | grep -v resolved | head -3 || echo "NO_DEBUG_SESSIONS"`
-- Orchestrator preferences: !`cat "${CLAUDE_SKILL_DIR}/preferences.md" 2>/dev/null || echo "No preferences yet"`
+- Status: !`[ -f "$HOME/.claude/get-shit-done/bin/gsd-tools.cjs" ] && echo "INSTALLED" || echo "NOT_INSTALLED"`
+- Version: !`cat "$HOME/.claude/get-shit-done/VERSION" 2>/dev/null || echo "unknown"`
+
+## Project State
+
+- Init: !`node "$HOME/.claude/get-shit-done/bin/gsd-tools.cjs" init progress 2>/dev/null || echo '{"project_exists":false}'`
+- Roadmap: !`node "$HOME/.claude/get-shit-done/bin/gsd-tools.cjs" roadmap analyze 2>/dev/null || echo '{}'`
+- State: !`node "$HOME/.claude/get-shit-done/bin/gsd-tools.cjs" state-snapshot 2>/dev/null || echo '{}'`
+- Paused: !`ls .planning/continue-here.md 2>/dev/null && echo "PAUSED" || echo "NOT_PAUSED"`
+- Debug: !`ls .planning/debug/*.md 2>/dev/null | grep -v resolved | head -3 || echo "NONE"`
+
+## GSD Config (source of truth — NOT a separate preferences file)
+
+!`cat .planning/config.json 2>/dev/null || echo "NO_CONFIG"`
+
+## Available GSD Commands (dynamically discovered from installed GSD)
+
+!`for f in "$HOME/.claude/commands/gsd/"*.md; do name=$(sed -n 's/^name: *//p' "$f" | head -1); desc=$(sed -n 's/^description: *//p' "$f" | head -1 | tr -d '"'); hint=$(sed -n 's/^argument-hint: *//p' "$f" | head -1 | tr -d '"'); [ -n "$name" ] && echo "- /$name $hint — $desc"; done 2>/dev/null || echo "NO_GSD_COMMANDS"`
 
 ## User Input
 
 $ARGUMENTS
 
-## Execution
+## Workflow
 
 @../../workflows/gsd-orchestrator.md
-
-Execute the orchestrator workflow end-to-end. The project state above is already loaded — skip the detect_state bash commands and parse directly from the pre-loaded data.
