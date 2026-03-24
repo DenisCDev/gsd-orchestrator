@@ -70,6 +70,16 @@ bash install.sh
 /g qual fase eu to?
 ```
 
+## Atualizacao
+
+```bash
+cd ~/.gsd-orchestrator
+git pull
+bash install.sh
+```
+
+O install.sh e idempotente: remove artefatos legacy, sobrescreve com versao atual.
+
 ## Pre-requisitos
 
 - [Claude Code](https://claude.com/claude-code)

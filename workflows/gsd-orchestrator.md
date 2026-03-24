@@ -84,9 +84,11 @@ Match the user's input SEMANTICALLY against these descriptions. Claude's languag
 
 1. **No project:** If command requires .planning/ and state is NO_PROJECT → suggest new-project first
 2. **No plan:** If executing but no plans exist → warn, suggest planning first
-3. **Context switch:** If user is switching to a completely different feature domain → suggest new chat (NOT /clear — with 1M context, new chat is the only recommendation)
-4. **Paused work conflict:** If PAUSED and user asks something unrelated → ask: resume or start fresh?
-5. **Active debug:** If HAS_DEBUG and user doesn't mention debugging → mention the active session
+3. **Invalid phase:** If user references a specific phase number, verify it exists in the pre-loaded Roadmap data. If not → "Fase {N} nao existe no roadmap. Fases disponiveis: {list}."
+4. **Context switch:** If user is switching to a completely different feature domain → suggest new chat (NOT /clear — with 1M context, new chat is the only recommendation)
+5. **Paused work conflict:** If PAUSED and user asks something unrelated → ask: resume or start fresh?
+6. **Active debug:** If HAS_DEBUG and user doesn't mention debugging → mention the active session
+7. **Verification after execution:** After ANY execute-phase or quick command completes, ALWAYS suggest verification. This is Anthropic's #1 best practice: "Include tests, screenshots, or expected outputs so Claude can check itself. This is the single highest-leverage thing you can do." Route to the verify-work or add-tests command from the registry.
 </step>
 
 <step name="dispatch">
@@ -132,7 +134,7 @@ Suggest the natural next step based on what just happened:
 <important>
 ## Anti-drift guarantees
 
-1. The command registry is discovered at runtime from `~/.claude/commands/gsd/*.md`. When GSD updates, new commands appear automatically.
+1. The command registry is discovered at runtime from BOTH `~/.claude/commands/gsd/*.md` AND `~/.claude/skills/gsd-*/SKILL.md`. Covers current and future GSD formats. When GSD updates, new commands appear automatically.
 2. Preferences come from `.planning/config.json` (GSD's own config). No separate preferences file.
 3. Routing is semantic (Claude matches intent to description), not keyword-based. Works in any language.
 4. If a command exists in the registry that the workflow doesn't explicitly mention, Claude can still route to it based on description match. The registry is ALWAYS authoritative over this workflow.

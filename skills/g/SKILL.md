@@ -37,9 +37,9 @@ allowed-tools:
 
 !`cat .planning/config.json 2>/dev/null || echo "NO_CONFIG"`
 
-## Available GSD Commands (dynamically discovered from installed GSD)
+## Available GSD Commands (dynamically discovered — scans both commands/ and skills/)
 
-!`for f in "$HOME/.claude/commands/gsd/"*.md; do name=$(sed -n 's/^name: *//p' "$f" | head -1); desc=$(sed -n 's/^description: *//p' "$f" | head -1 | tr -d '"'); hint=$(sed -n 's/^argument-hint: *//p' "$f" | head -1 | tr -d '"'); [ -n "$name" ] && echo "- /$name $hint — $desc"; done 2>/dev/null || echo "NO_GSD_COMMANDS"`
+!`for f in "$HOME/.claude/commands/gsd/"*.md "$HOME/.claude/skills/gsd-*/SKILL.md"; do [ -f "$f" ] && name=$(sed -n 's/^name: *//p' "$f" | head -1) && desc=$(sed -n 's/^description: *//p' "$f" | head -1 | tr -d '"') && hint=$(sed -n 's/^argument-hint: *//p' "$f" | head -1 | tr -d '"') && [ -n "$name" ] && echo "- /$name $hint — $desc"; done 2>/dev/null | sort -u || echo "NO_GSD_COMMANDS"`
 
 ## User Input
 
