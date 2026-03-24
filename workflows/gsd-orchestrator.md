@@ -1,15 +1,72 @@
 <purpose>
-Smart GSD orchestrator. Matches natural language to GSD commands using the DYNAMICALLY DISCOVERED command registry above.
+Smart GSD orchestrator. Matches natural language to GSD commands using a dynamically discovered command registry.
 
-CRITICAL: Never hardcode GSD command names in routing logic. The "Available GSD Commands" list injected by SKILL.md IS the source of truth. If GSD adds new commands, they appear automatically. If GSD removes commands, they disappear. Trust the registry.
+CRITICAL: Never hardcode GSD command names in routing logic. The command registry gathered in gather_context IS the source of truth. If GSD adds new commands, they appear automatically. If GSD removes commands, they disappear. Trust the registry.
 </purpose>
 
 <process>
 
-<step name="validate">
-**Check prerequisites.**
+<step name="gather_context">
+**Gather GSD environment state. All commands run as visible Bash tool calls so the user sees what's happening.**
 
-If GSD Status is "NOT_INSTALLED" OR Available GSD Commands is "NO_GSD_COMMANDS":
+**Wave 1 — run these 4 commands in parallel:**
+
+1. GSD installation check:
+```bash
+[ -f "$HOME/.claude/get-shit-done/bin/gsd-tools.cjs" ] && echo "INSTALLED" || echo "NOT_INSTALLED"
+```
+
+2. GSD version:
+```bash
+cat "$HOME/.claude/get-shit-done/VERSION" 2>/dev/null || echo "unknown"
+```
+
+3. Project state:
+```bash
+node "$HOME/.claude/get-shit-done/bin/gsd-tools.cjs" init progress 2>/dev/null || echo '{"project_exists":false}'
+```
+
+4. Available GSD commands:
+```bash
+result=$(for f in "$HOME/.claude/commands/gsd/"*.md "$HOME/.claude/skills/gsd-*/SKILL.md"; do [ -f "$f" ] && name=$(sed -n 's/^name: *//p' "$f" | head -1) && desc=$(sed -n 's/^description: *//p' "$f" | head -1 | tr -d '"') && hint=$(sed -n 's/^argument-hint: *//p' "$f" | head -1 | tr -d '"') && [ -n "$name" ] && echo "- /$name $hint — $desc"; done 2>/dev/null | sort -u); [ -n "$result" ] && echo "$result" || echo "NO_GSD_COMMANDS"
+```
+
+Store results as: `$GSD_STATUS`, `$GSD_VERSION`, `$INIT_STATE` (JSON), `$COMMAND_REGISTRY`.
+
+**Wave 2 — only if `project_exists` is true in $INIT_STATE, run these 5 commands in parallel:**
+
+5. Roadmap analysis:
+```bash
+node "$HOME/.claude/get-shit-done/bin/gsd-tools.cjs" roadmap analyze 2>/dev/null || echo '{}'
+```
+
+6. State snapshot:
+```bash
+node "$HOME/.claude/get-shit-done/bin/gsd-tools.cjs" state-snapshot 2>/dev/null || echo '{}'
+```
+
+7. Pause check:
+```bash
+ls .planning/continue-here.md 2>/dev/null && echo "PAUSED" || echo "NOT_PAUSED"
+```
+
+8. Debug sessions:
+```bash
+ls .planning/debug/*.md 2>/dev/null | grep -v resolved | head -3 || echo "NONE"
+```
+
+9. GSD config:
+```bash
+cat .planning/config.json 2>/dev/null || echo "NO_CONFIG"
+```
+
+If `project_exists` is false, skip Wave 2 — set defaults: roadmap={}, state={}, paused=NOT_PAUSED, debug=NONE, config=NO_CONFIG.
+</step>
+
+<step name="validate">
+**Check prerequisites using data from gather_context.**
+
+If $GSD_STATUS is "NOT_INSTALLED" OR $COMMAND_REGISTRY is "NO_GSD_COMMANDS":
 → Ask via AskUserQuestion:
   header: "GSD não instalado"
   question: "GSD não foi encontrado. Instalar agora?"
@@ -18,9 +75,9 @@ If GSD Status is "NOT_INSTALLED" OR Available GSD Commands is "NO_GSD_COMMANDS":
 → If user confirms:
   1. Run: `npx get-shit-done-cc@latest`
   2. Verify: `[ -f "$HOME/.claude/get-shit-done/bin/gsd-tools.cjs" ] && echo "OK" || echo "FAIL"`
-  3. If OK → "GSD instalado! Rode `/g` novamente para começar."
-  4. If FAIL → "Instalação falhou. Tente manualmente: `npx get-shit-done-cc@latest`"
-→ Stop. (SKILL.md needs to re-expand with fresh GSD data on next invocation)
+  3. If OK → re-run gather_context to load fresh GSD data, then continue to parse_state.
+  4. If FAIL → "Instalação falhou. Tente manualmente: `npx get-shit-done-cc@latest`" → Stop.
+→ If user declines → Stop.
 
 If $ARGUMENTS is empty:
 → If project_exists is false → present the first-contact menu below, then Stop:
@@ -49,7 +106,7 @@ Use AskUserQuestion to ask which option (or let the user describe a task). Route
 </step>
 
 <step name="parse_state">
-**Determine project state from pre-loaded data.**
+**Determine project state from gather_context data.**
 
 | State | Condition |
 |-------|-----------|
@@ -74,7 +131,7 @@ From GSD Config (if exists), note relevant settings:
 <step name="match_and_route">
 **Match user intent to command(s) from the dynamic registry.**
 
-Read the "Available GSD Commands" list. Each entry has: `/command-name [args] — description`.
+Read $COMMAND_REGISTRY. Each entry has: `/command-name [args] — description`.
 Match the user's input SEMANTICALLY against these descriptions. Claude's language understanding does the routing — no keyword tables needed. IMPORTANT: Always prefer specific action commands over meta-commands (/gsd:do, /gsd:next, /gsd:progress, /gsd:autonomous, /gsd:manager). This orchestrator IS the meta-layer — never delegate to another meta-layer.
 
 **Routing rules:**
@@ -82,7 +139,7 @@ Match the user's input SEMANTICALLY against these descriptions. Claude's languag
 1. **Single command match** → dispatch directly
 2. **Multi-step sequence** (e.g., "plan and execute") → present sequence, confirm, execute
 3. **Ambiguous** (2-3 possible matches) → ask user to choose
-4. **Side question** (answerable from pre-loaded state) → answer directly, no command needed
+4. **Side question** (answerable from gathered state) → answer directly, no command needed
 5. **Vague input** ("continua", "vai", "next", "bora") → use state-aware defaults below
 
 **State-aware defaults for vague inputs:**
@@ -112,7 +169,7 @@ Match the user's input SEMANTICALLY against these descriptions. Claude's languag
 1. **No project:** If command requires .planning/ and state is NO_PROJECT → suggest new-project first.
    Exception: these commands work WITHOUT .planning/: quick (auto-bootstraps), help, new-project, settings, set-profile, join-discord, update, profile-user, stats.
 2. **No plan:** If executing but no plans exist → warn, suggest planning first
-3. **Invalid phase:** If user references a specific phase number, verify it exists in the pre-loaded Roadmap data. If not → "Fase {N} nao existe no roadmap. Fases disponiveis: {list}."
+3. **Invalid phase:** If user references a specific phase number, verify it exists in the gathered Roadmap data. If not → "Fase {N} nao existe no roadmap. Fases disponiveis: {list}."
 4. **Context switch:** If user is switching to a completely different feature domain → suggest new chat (NOT /clear — with 1M context, new chat is the only recommendation)
 5. **Paused work conflict:** If PAUSED and user asks something unrelated → ask: resume or start fresh?
 6. **Active debug:** If HAS_DEBUG and user doesn't mention debugging → mention the active session
