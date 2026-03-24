@@ -9,13 +9,18 @@ CRITICAL: Never hardcode GSD command names in routing logic. The "Available GSD 
 <step name="validate">
 **Check prerequisites.**
 
-If GSD Status is "NOT_INSTALLED":
-→ "GSD nao esta instalado. Rode: `npx get-shit-done-cc@latest`"
-→ Stop.
+If GSD Status is "NOT_INSTALLED" OR Available GSD Commands is "NO_GSD_COMMANDS":
+→ Ask via AskUserQuestion:
+  header: "GSD não instalado"
+  question: "GSD não foi encontrado. Instalar agora?"
+  options: ["Sim, instalar", "Não"]
 
-If Available GSD Commands is "NO_GSD_COMMANDS":
-→ "Comandos GSD nao encontrados. Reinstale com: `npx get-shit-done-cc@latest`"
-→ Stop.
+→ If user confirms:
+  1. Run: `npx get-shit-done-cc@latest`
+  2. Verify: `[ -f "$HOME/.claude/get-shit-done/bin/gsd-tools.cjs" ] && echo "OK" || echo "FAIL"`
+  3. If OK → "GSD instalado! Rode `/g` novamente para começar."
+  4. If FAIL → "Instalação falhou. Tente manualmente: `npx get-shit-done-cc@latest`"
+→ Stop. (SKILL.md needs to re-expand with fresh GSD data on next invocation)
 
 If $ARGUMENTS is empty:
 → If project_exists is false → present the first-contact menu below, then Stop:
