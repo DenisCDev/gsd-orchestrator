@@ -48,7 +48,7 @@ From GSD Config (if exists), note relevant settings:
 **Match user intent to command(s) from the dynamic registry.**
 
 Read the "Available GSD Commands" list. Each entry has: `/command-name [args] — description`.
-Match the user's input SEMANTICALLY against these descriptions. Claude's language understanding does the routing — no keyword tables needed.
+Match the user's input SEMANTICALLY against these descriptions. Claude's language understanding does the routing — no keyword tables needed. IMPORTANT: Always prefer specific action commands over meta-commands (/gsd:do, /gsd:next, /gsd:progress, /gsd:autonomous, /gsd:manager). This orchestrator IS the meta-layer — never delegate to another meta-layer.
 
 **Routing rules:**
 
@@ -88,7 +88,7 @@ Match the user's input SEMANTICALLY against these descriptions. Claude's languag
 4. **Context switch:** If user is switching to a completely different feature domain → suggest new chat (NOT /clear — with 1M context, new chat is the only recommendation)
 5. **Paused work conflict:** If PAUSED and user asks something unrelated → ask: resume or start fresh?
 6. **Active debug:** If HAS_DEBUG and user doesn't mention debugging → mention the active session
-7. **Verification after execution:** After ANY execute-phase or quick command completes, ALWAYS suggest verification. This is Anthropic's #1 best practice: "Include tests, screenshots, or expected outputs so Claude can check itself. This is the single highest-leverage thing you can do." Route to the verify-work or add-tests command from the registry.
+7. **Verification after execution:** Handled in post_dispatch step — always suggest verify-work or add-tests after execution commands.
 </step>
 
 <step name="dispatch">
