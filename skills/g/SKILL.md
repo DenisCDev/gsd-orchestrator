@@ -28,14 +28,14 @@ allowed-tools:
 ## Project State
 
 - Init: !`node "$HOME/.claude/get-shit-done/bin/gsd-tools.cjs" init progress 2>/dev/null || echo '{"project_exists":false}'`
-- Roadmap: !`node "$HOME/.claude/get-shit-done/bin/gsd-tools.cjs" roadmap analyze 2>/dev/null || echo '{}'`
-- State: !`node "$HOME/.claude/get-shit-done/bin/gsd-tools.cjs" state-snapshot 2>/dev/null || echo '{}'`
-- Paused: !`ls .planning/continue-here.md 2>/dev/null && echo "PAUSED" || echo "NOT_PAUSED"`
-- Debug: !`ls .planning/debug/*.md 2>/dev/null | grep -v resolved | head -3 || echo "NONE"`
+- Roadmap: !`[ -d ".planning" ] && node "$HOME/.claude/get-shit-done/bin/gsd-tools.cjs" roadmap analyze 2>/dev/null || echo '{}'`
+- State: !`[ -d ".planning" ] && node "$HOME/.claude/get-shit-done/bin/gsd-tools.cjs" state-snapshot 2>/dev/null || echo '{}'`
+- Paused: !`[ -d ".planning" ] && ls .planning/continue-here.md 2>/dev/null && echo "PAUSED" || echo "NOT_PAUSED"`
+- Debug: !`[ -d ".planning" ] && ls .planning/debug/*.md 2>/dev/null | grep -v resolved | head -3 || echo "NONE"`
 
 ## GSD Config (source of truth — NOT a separate preferences file)
 
-!`cat .planning/config.json 2>/dev/null || echo "NO_CONFIG"`
+!`[ -d ".planning" ] && cat .planning/config.json 2>/dev/null || echo "NO_CONFIG"`
 
 ## Available GSD Commands (dynamically discovered — scans both commands/ and skills/)
 

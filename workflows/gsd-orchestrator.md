@@ -17,8 +17,30 @@ If Available GSD Commands is "NO_GSD_COMMANDS":
 → "Comandos GSD nao encontrados. Reinstale com: `npx get-shit-done-cc@latest`"
 → Stop.
 
-If $ARGUMENTS is empty, ask via AskUserQuestion:
-→ "O que voce quer fazer? Descreva naturalmente — eu cuido do resto."
+If $ARGUMENTS is empty:
+→ If project_exists is false → present the first-contact menu below, then Stop:
+
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ GSD ► Primeiro contato
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Este repo não tem GSD configurado.
+
+1. Tarefa rápida — resolver algo agora, sem cerimônia
+   /g fix the pagination bug
+   /g implementar login com OAuth
+
+2. Projeto estruturado — roadmap, fases, pesquisa
+   /gsd:new-project
+
+3. Explorar comandos
+   /gsd:help
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
+Use AskUserQuestion to ask which option (or let the user describe a task). Route: task description → quick, project setup → new-project, explore → help.
+
+→ Otherwise (project exists), use state-aware defaults from match_and_route directly — the current state already determines the next action, no need to ask.
 </step>
 
 <step name="parse_state">
@@ -70,7 +92,7 @@ Match the user's input SEMANTICALLY against these descriptions. Claude's languag
 | PHASE_COMPLETE | Route to discuss or plan for next phase |
 | MILESTONE_COMPLETE | Route to complete-milestone |
 | BETWEEN_MILESTONES | Route to new-milestone |
-| NO_PROJECT | Route to new-project |
+| NO_PROJECT | Classify intent: specific task/action → quick (auto-bootstraps .planning/). Project setup → new-project. Exploration/help → help. Unclear → present first-contact menu. |
 | Fallback | Route to progress |
 
 **For multi-step sequences, respect GSD config:**
@@ -82,7 +104,8 @@ Match the user's input SEMANTICALLY against these descriptions. Claude's languag
 <step name="guard_rails">
 **Check before dispatching.**
 
-1. **No project:** If command requires .planning/ and state is NO_PROJECT → suggest new-project first
+1. **No project:** If command requires .planning/ and state is NO_PROJECT → suggest new-project first.
+   Exception: these commands work WITHOUT .planning/: quick (auto-bootstraps), help, new-project, settings, set-profile, join-discord, update, profile-user, stats.
 2. **No plan:** If executing but no plans exist → warn, suggest planning first
 3. **Invalid phase:** If user references a specific phase number, verify it exists in the pre-loaded Roadmap data. If not → "Fase {N} nao existe no roadmap. Fases disponiveis: {list}."
 4. **Context switch:** If user is switching to a completely different feature domain → suggest new chat (NOT /clear — with 1M context, new chat is the only recommendation)
