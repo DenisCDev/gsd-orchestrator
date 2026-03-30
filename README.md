@@ -1,6 +1,153 @@
 # GSD Orchestrator (`/g`)
 
+Intelligent orchestrator for [GSD (Get Shit Done)](https://github.com/gsd-build/get-shit-done). Speak naturally to Claude and get maximum GSD efficiency.
+
+**[Portugues](#gsd-orchestrator-g-1)** | English
+
+## What it solves
+
+Instead of memorizing 57+ GSD commands and knowing the correct order, you just say what you want:
+
+| You say | Orchestrator executes |
+|---------|----------------------|
+| "continue where I left off" | Detects state → resume-work or execute-phase |
+| "there's a bug in login" | Evaluates complexity → debug or quick |
+| "plan and execute phase 3" | discuss → plan → execute (confirmed sequence) |
+| "how's the project going?" | Answers directly from pre-loaded data |
+| "do everything automatically" | autonomous |
+
+## Architecture: Dynamic Discovery (zero drift)
+
+Unlike a hardcoded routing table, the orchestrator **discovers commands at runtime**:
+
+```
+SKILL.md                              Workflow
+┌─────────────────────────┐           ┌──────────────────────┐
+│ !`scan gsd commands`    │──────────>│ Match user intent    │
+│ !`load project state`   │           │ against descriptions │
+│ !`read config.json`     │           │ (semantic, not       │
+│                         │           │  keyword-based)      │
+│ Available Commands:     │           │                      │
+│ - /gsd:do — Route...   │           │ Dispatch best match  │
+│ - /gsd:next — Auto...  │           └──────────────────────┘
+│ - /gsd:fast — Triv...  │
+│ - (auto-discovered)     │
+└─────────────────────────┘
+```
+
+**When GSD updates** (npx get-shit-done-cc@latest):
+- New commands appear automatically in the registry
+- Removed commands disappear
+- Arguments and descriptions reflect the current version
+- Zero orchestrator maintenance
+
+## Differentials vs `/gsd:do` + `/gsd:next`
+
+| Feature | `/gsd:do` | `/gsd:next` | `/g` |
+|---------|-----------|-------------|------|
+| Free text → command | Yes | No | Yes |
+| Auto-detects state | No | Yes | Yes |
+| Pre-loads state (0 turns) | No | No | Yes |
+| Chains multi-step | No | No | Yes |
+| Reads GSD config.json | Via workflow | Via workflow | Pre-loaded |
+| Side questions without command | No | No | Yes |
+| Suggests verification | No | No | Yes |
+| Suggests worktrees/screenshots | No | No | Yes |
+
+## Installation
+
+```bash
+git clone https://github.com/DenisCDev/gsd-orchestrator.git ~/.gsd-orchestrator
+cd ~/.gsd-orchestrator
+bash install.sh
+```
+
+## Usage
+
+```
+/g I want to start the delivery app
+/g continue
+/g there's a bug in the form
+/g plan and execute phase 4
+/g what phase am I on?
+```
+
+## Update
+
+```bash
+cd ~/.gsd-orchestrator
+git pull
+bash install.sh
+```
+
+The install.sh is idempotent: removes legacy artifacts, overwrites with the current version.
+
+## Prerequisites
+
+- [Claude Code](https://claude.com/claude-code)
+- [GSD](https://github.com/gsd-build/get-shit-done) installed (`npx get-shit-done-cc@latest`)
+
+## Architecture Decisions
+
+### Why dynamic discovery?
+
+> GSD evolves fast (v1.25 → v1.28 in weeks). A hardcoded routing table silently diverges — routing to commands that don't exist or ignoring new ones. Dynamic discovery eliminates this risk by reading `~/.claude/commands/gsd/*.md` at runtime.
+
+### Why no separate preferences file?
+
+> GSD already has `.planning/config.json` with real settings (`skip_discuss`, `auto_advance`, `model_profile`). Maintaining a separate `preferences.md` creates two sources of truth that can diverge. The orchestrator reads GSD's config.json directly.
+
+### Why semantic routing instead of keywords?
+
+> Claude is an LLM. It understands "fix the auth bug" and "there's a bug in login" equally well. Giving it the command list with descriptions and letting it do semantic matching works in any language, without a keyword table.
+
+### Context strategy (1M tokens)
+
+> *"Most best practices are based on one constraint: Claude's context window fills up fast."* With 1M context, the only recommendation is a new chat for a completely different heavy feature. No /clear, no /compact.
+>
+> — [Claude Code Best Practices](https://code.claude.com/docs/en/best-practices)
+
+### Verification as practice #1
+
+> *"Include tests, screenshots, or expected outputs so Claude can check itself. This is the single highest-leverage thing you can do."*
+>
+> — [Claude Code Best Practices](https://code.claude.com/docs/en/best-practices)
+
+### Dynamic context injection
+
+> Skills use `!`command`` to execute shell commands before content reaches Claude.
+>
+> — [Extend Claude with Skills](https://code.claude.com/docs/en/skills)
+
+### Writer/Reviewer with worktrees
+
+> *One session writes, another reviews with fresh context.*
+>
+> — [Common Workflows](https://code.claude.com/docs/en/common-workflows)
+
+## Official Sources
+
+| Article | URL |
+|---------|-----|
+| Claude Code Best Practices | https://code.claude.com/docs/en/best-practices |
+| Context Engineering for AI Agents | https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents |
+| Extend Claude with Skills | https://code.claude.com/docs/en/skills |
+| Custom Subagents | https://code.claude.com/docs/en/sub-agents |
+| Hooks Guide | https://code.claude.com/docs/en/hooks-guide |
+| Common Workflows | https://code.claude.com/docs/en/common-workflows |
+| CLAUDE.md and Memory | https://code.claude.com/docs/en/memory |
+
+## License
+
+MIT
+
+---
+
+# GSD Orchestrator (`/g`)
+
 Orquestrador inteligente para o [GSD (Get Shit Done)](https://github.com/gsd-build/get-shit-done). Fale naturalmente com o Claude e receba a eficiencia maxima do GSD.
+
+**English** | [Portugues](#gsd-orchestrator-g-1)
 
 ## O que resolve
 
