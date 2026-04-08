@@ -7,66 +7,102 @@ CRITICAL: Never hardcode GSD command names in routing logic. The command registr
 <process>
 
 <step name="gather_context">
-**Gather GSD environment state. All commands run as visible Bash tool calls so the user sees what's happening.**
+**Gather GSD environment state LAZILY. Fetch only what's needed for the current input. All commands run as visible Bash tool calls so the user sees what's happening.**
 
-**Wave 1 — run these 4 commands in parallel:**
+**Wave 1 — minimal state (ALWAYS, run these 2 commands in parallel):**
 
-1. GSD installation check:
+1. GSD installation + version:
 ```bash
-[ -f "$HOME/.claude/get-shit-done/bin/gsd-tools.cjs" ] && echo "INSTALLED" || echo "NOT_INSTALLED"
+if [ -f "$HOME/.claude/get-shit-done/bin/gsd-tools.cjs" ]; then
+  echo "INSTALLED $(cat "$HOME/.claude/get-shit-done/VERSION" 2>/dev/null || echo unknown)"
+else
+  echo "NOT_INSTALLED"
+fi
 ```
 
-2. GSD version:
-```bash
-cat "$HOME/.claude/get-shit-done/VERSION" 2>/dev/null || echo "unknown"
-```
-
-3. Project state:
+2. Project state (lightweight):
 ```bash
 node "$HOME/.claude/get-shit-done/bin/gsd-tools.cjs" init progress 2>/dev/null || echo '{"project_exists":false}'
 ```
 
-4. Available GSD commands:
-```bash
-result=$(for f in "$HOME/.claude/commands/gsd/"*.md "$HOME/.claude/skills/gsd-*/SKILL.md"; do [ -f "$f" ] && name=$(sed -n 's/^name: *//p' "$f" | head -1) && desc=$(sed -n 's/^description: *//p' "$f" | head -1 | tr -d '"') && hint=$(sed -n 's/^argument-hint: *//p' "$f" | head -1 | tr -d '"') && [ -n "$name" ] && echo "- /$name $hint — $desc"; done 2>/dev/null | sort -u); [ -n "$result" ] && echo "$result" || echo "NO_GSD_COMMANDS"
-```
+Store results as: `$GSD_STATUS_LINE` (starts with INSTALLED or NOT_INSTALLED), `$INIT_STATE` (JSON with at least `project_exists` and current phase info).
 
-Store results as: `$GSD_STATUS`, `$GSD_VERSION`, `$INIT_STATE` (JSON), `$COMMAND_REGISTRY`.
+**Classify intent — look at `$ARGUMENTS` and `$INIT_STATE` and pick ONE path. Do NOT run more bash than needed for the chosen path.**
 
-**Wave 2 — only if `project_exists` is true in $INIT_STATE, run these 5 commands in parallel:**
+| Path | Condition | What to fetch next |
+|------|-----------|--------------------|
+| **A. Installation needed** | `$GSD_STATUS_LINE` begins with `NOT_INSTALLED` | Nothing. Jump straight to `validate`. |
+| **B. Empty input, no project** | `$ARGUMENTS` empty AND `project_exists=false` | Nothing. Jump straight to `validate` (first-contact menu). |
+| **C. Side question** | Input is a question answerable from `$INIT_STATE` alone — e.g. "qual fase tô?", "progresso", "quantas fases faltam?", "que milestone é esse?" | Nothing. Answer directly from `$INIT_STATE` in `match_and_route` rule #4. |
+| **D. Vague input, project exists** | Input like "continua", "vai", "next", "bora" AND `project_exists=true` | Run **Wave 2 LITE** (snapshot + pause only). |
+| **E. Needs command routing** | Specific action ("planejar fase 3", "executar", "debugar X", "roadmap novo", etc.) — anything not covered by A–D | Run **Wave 2 FULL** (registry + full state). |
 
-5. Roadmap analysis:
-```bash
-node "$HOME/.claude/get-shit-done/bin/gsd-tools.cjs" roadmap analyze 2>/dev/null || echo '{}'
-```
+**Wave 2 LITE — path D only (run in parallel):**
 
-6. State snapshot:
+3. State snapshot:
 ```bash
 node "$HOME/.claude/get-shit-done/bin/gsd-tools.cjs" state-snapshot 2>/dev/null || echo '{}'
 ```
 
-7. Pause check:
+4. Pause check:
 ```bash
-ls .planning/continue-here.md 2>/dev/null && echo "PAUSED" || echo "NOT_PAUSED"
+[ -f .planning/continue-here.md ] && echo "PAUSED" || echo "NOT_PAUSED"
 ```
 
-8. Debug sessions:
+Store as `$SNAPSHOT`, `$PAUSED`. For Lite, assume `$ROADMAP={}`, `$DEBUG=NONE`, `$CONFIG=NO_CONFIG`, `$COMMAND_REGISTRY=""` (routing uses state-aware defaults only).
+
+**Wave 2 FULL — path E only (run ALL of these in parallel):**
+
+5. Command registry (cached with mtime invalidation, single-pass awk):
 ```bash
+CACHE="$HOME/.cache/gsd-registry.txt"
+mkdir -p "$HOME/.cache"
+NEWER=$(find "$HOME/.claude/commands/gsd" "$HOME/.claude/skills" -maxdepth 2 -name '*.md' -newer "$CACHE" -print -quit 2>/dev/null)
+if [ -f "$CACHE" ] && [ -z "$NEWER" ]; then
+  cat "$CACHE"
+else
+  shopt -s nullglob
+  files=("$HOME/.claude/commands/gsd/"*.md "$HOME/.claude/skills/gsd-"*/SKILL.md)
+  if [ ${#files[@]} -eq 0 ]; then
+    printf 'NO_GSD_COMMANDS\n' | tee "$CACHE"
+  else
+    awk '
+      FNR==1 { if (name != "") print "- /" name " " hint " — " desc; name=""; desc=""; hint="" }
+      /^name:/          { if (name=="") { sub(/^name: */, ""); gsub(/"/, ""); name=$0 } }
+      /^description:/   { if (desc=="") { sub(/^description: */, ""); gsub(/"/, ""); desc=$0 } }
+      /^argument-hint:/ { if (hint=="") { sub(/^argument-hint: */, ""); gsub(/"/, ""); hint=$0 } }
+      END { if (name != "") print "- /" name " " hint " — " desc }
+    ' "${files[@]}" 2>/dev/null | sort -u | tee "$CACHE"
+  fi
+fi
+```
+
+6. Roadmap analysis:
+```bash
+node "$HOME/.claude/get-shit-done/bin/gsd-tools.cjs" roadmap analyze 2>/dev/null || echo '{}'
+```
+
+7. State snapshot:
+```bash
+node "$HOME/.claude/get-shit-done/bin/gsd-tools.cjs" state-snapshot 2>/dev/null || echo '{}'
+```
+
+8. Pause + debug + config (combined, cheap filesystem reads):
+```bash
+[ -f .planning/continue-here.md ] && echo "PAUSED" || echo "NOT_PAUSED"
 ls .planning/debug/*.md 2>/dev/null | grep -v resolved | head -3 || echo "NONE"
-```
-
-9. GSD config:
-```bash
 cat .planning/config.json 2>/dev/null || echo "NO_CONFIG"
 ```
 
-If `project_exists` is false, skip Wave 2 — set defaults: roadmap={}, state={}, paused=NOT_PAUSED, debug=NONE, config=NO_CONFIG.
+Store as: `$COMMAND_REGISTRY`, `$ROADMAP`, `$SNAPSHOT`, `$PAUSED`, `$DEBUG`, `$CONFIG`.
+
+**If `project_exists` is false AND path is E**, skip commands 6–8 (no project state exists); still run command 5 (registry) because routing requires it.
 </step>
 
 <step name="validate">
 **Check prerequisites using data from gather_context.**
 
-If $GSD_STATUS is "NOT_INSTALLED" OR $COMMAND_REGISTRY is "NO_GSD_COMMANDS":
+If `$GSD_STATUS_LINE` begins with "NOT_INSTALLED" OR (path was E and `$COMMAND_REGISTRY` equals "NO_GSD_COMMANDS"):
 → Ask via AskUserQuestion:
   header: "GSD não instalado"
   question: "GSD não foi encontrado. Instalar agora?"
