@@ -55,6 +55,7 @@ Store as `$SNAPSHOT`, `$PAUSED`. For Lite, assume `$ROADMAP={}`, `$DEBUG=NONE`, 
 
 5. Command registry (cached with mtime invalidation, single-pass awk):
 ```bash
+set +H  # disable bash history expansion (breaks awk in some Windows bashes)
 CACHE="$HOME/.cache/gsd-registry.txt"
 mkdir -p "$HOME/.cache"
 NEWER=$(find "$HOME/.claude/commands/gsd" "$HOME/.claude/skills" -maxdepth 2 -name '*.md' -newer "$CACHE" -print -quit 2>/dev/null)
@@ -67,11 +68,11 @@ else
     printf 'NO_GSD_COMMANDS\n' | tee "$CACHE"
   else
     awk '
-      FNR==1 { if (name != "") print "- /" name " " hint " — " desc; name=""; desc=""; hint="" }
-      /^name:/          { if (name=="") { sub(/^name: */, ""); gsub(/"/, ""); name=$0 } }
-      /^description:/   { if (desc=="") { sub(/^description: */, ""); gsub(/"/, ""); desc=$0 } }
-      /^argument-hint:/ { if (hint=="") { sub(/^argument-hint: */, ""); gsub(/"/, ""); hint=$0 } }
-      END { if (name != "") print "- /" name " " hint " — " desc }
+      FNR==1 { if (length(name) > 0) print "- /" name " " hint " — " desc; name=""; desc=""; hint="" }
+      /^name:/          { if (length(name) == 0) { sub(/^name: */, ""); gsub(/"/, ""); name=$0 } }
+      /^description:/   { if (length(desc) == 0) { sub(/^description: */, ""); gsub(/"/, ""); desc=$0 } }
+      /^argument-hint:/ { if (length(hint) == 0) { sub(/^argument-hint: */, ""); gsub(/"/, ""); hint=$0 } }
+      END { if (length(name) > 0) print "- /" name " " hint " — " desc }
     ' "${files[@]}" 2>/dev/null | sort -u | tee "$CACHE"
   fi
 fi
@@ -129,10 +130,10 @@ Este repo não tem GSD configurado.
    /g implementar login com OAuth
 
 2. Projeto estruturado — roadmap, fases, pesquisa
-   /gsd:new-project
+   /gsd-new-project
 
 3. Explorar comandos
-   /gsd:help
+   /gsd-help
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
@@ -168,7 +169,7 @@ From GSD Config (if exists), note relevant settings:
 **Match user intent to command(s) from the dynamic registry.**
 
 Read $COMMAND_REGISTRY. Each entry has: `/command-name [args] — description`.
-Match the user's input SEMANTICALLY against these descriptions. Claude's language understanding does the routing — no keyword tables needed. IMPORTANT: Always prefer specific action commands over meta-commands (/gsd:do, /gsd:next, /gsd:progress, /gsd:autonomous, /gsd:manager). This orchestrator IS the meta-layer — never delegate to another meta-layer.
+Match the user's input SEMANTICALLY against these descriptions. Claude's language understanding does the routing — no keyword tables needed. IMPORTANT: Always prefer specific action commands over meta-commands (/gsd-do, /gsd-next, /gsd-progress, /gsd-autonomous, /gsd-manager). This orchestrator IS the meta-layer — never delegate to another meta-layer.
 
 **Routing rules:**
 
@@ -226,7 +227,7 @@ Action: /{command} {args}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
-Invoke via Skill tool: `skill: "gsd:{command}", args: "{arguments}"`
+Invoke via Skill tool using the full skill name from the registry (e.g. `gsd-plan-phase`, `gsd-execute-phase`): `skill: "{command}", args: "{arguments}"` where `{command}` is the full skill name including the `gsd-` prefix. Do NOT rewrite `gsd-` to `gsd:` — GSD ≥1.30 uses dash-prefixed skill names.
 
 **Multi-step:** Present full plan → confirm → execute sequentially.
 **Side question:** Answer directly, no header.

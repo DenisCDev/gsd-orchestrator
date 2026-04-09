@@ -28,9 +28,9 @@ SKILL.md                              Workflow
 │ !`read config.json`     │           │ (semantic, not       │
 │                         │           │  keyword-based)      │
 │ Available Commands:     │           │                      │
-│ - /gsd:do — Route...   │           │ Dispatch best match  │
-│ - /gsd:next — Auto...  │           └──────────────────────┘
-│ - /gsd:fast — Triv...  │
+│ - /gsd-do — Route...   │           │ Dispatch best match  │
+│ - /gsd-next — Auto...  │           └──────────────────────┘
+│ - /gsd-fast — Triv...  │
 │ - (auto-discovered)     │
 └─────────────────────────┘
 ```
@@ -41,9 +41,9 @@ SKILL.md                              Workflow
 - Arguments and descriptions reflect the current version
 - Zero orchestrator maintenance
 
-## Differentials vs `/gsd:do` + `/gsd:next`
+## Differentials vs `/gsd-do` + `/gsd-next`
 
-| Feature | `/gsd:do` | `/gsd:next` | `/g` |
+| Feature | `/gsd-do` | `/gsd-next` | `/g` |
 |---------|-----------|-------------|------|
 | Free text → command | Yes | No | Yes |
 | Auto-detects state | No | Yes | Yes |
@@ -87,11 +87,25 @@ The install.sh is idempotent: removes legacy artifacts, overwrites with the curr
 - [Claude Code](https://claude.com/claude-code)
 - [GSD](https://github.com/gsd-build/get-shit-done) installed (`npx get-shit-done-cc@latest`)
 
+## Compatibility
+
+Tested against **GSD 1.34.2** (skill-based naming: `/gsd-<command>`).
+
+GSD ≥1.30 moved commands from `~/.claude/commands/gsd/*.md` (colon prefix `/gsd:do`) to `~/.claude/skills/gsd-*/SKILL.md` (dash prefix `/gsd-do`). The orchestrator reads both locations, so older versions still work, but the dispatch uses the dash-prefixed skill names when invoking via the Skill tool.
+
+If you hit routing errors after a GSD upgrade, pin to the last known-good version:
+
+```bash
+npx get-shit-done-cc@1.34.2
+```
+
+Then re-run `bash install.sh` from this repo to refresh the orchestrator.
+
 ## Architecture Decisions
 
 ### Why dynamic discovery?
 
-> GSD evolves fast (v1.25 → v1.28 in weeks). A hardcoded routing table silently diverges — routing to commands that don't exist or ignoring new ones. Dynamic discovery eliminates this risk by reading `~/.claude/commands/gsd/*.md` at runtime.
+> GSD evolves fast. A hardcoded routing table silently diverges — routing to commands that don't exist or ignoring new ones. Dynamic discovery eliminates this risk by reading `~/.claude/commands/gsd/*.md` and `~/.claude/skills/gsd-*/SKILL.md` at runtime.
 
 ### Why no separate preferences file?
 
@@ -173,9 +187,9 @@ SKILL.md                              Workflow
 │ !`read config.json`     │           │ (semantic, not       │
 │                         │           │  keyword-based)      │
 │ Available Commands:     │           │                      │
-│ - /gsd:do — Route...   │           │ Dispatch best match  │
-│ - /gsd:next — Auto...  │           └──────────────────────┘
-│ - /gsd:fast — Triv...  │
+│ - /gsd-do — Route...   │           │ Dispatch best match  │
+│ - /gsd-next — Auto...  │           └──────────────────────┘
+│ - /gsd-fast — Triv...  │
 │ - (auto-discovered)     │
 └─────────────────────────┘
 ```
@@ -186,9 +200,9 @@ SKILL.md                              Workflow
 - Argumentos e descricoes refletem a versao atual
 - Zero manutencao no orchestrator
 
-## Diferenciais vs `/gsd:do` + `/gsd:next`
+## Diferenciais vs `/gsd-do` + `/gsd-next`
 
-| Feature | `/gsd:do` | `/gsd:next` | `/g` |
+| Feature | `/gsd-do` | `/gsd-next` | `/g` |
 |---------|-----------|-------------|------|
 | Texto livre → comando | Sim | Nao | Sim |
 | Auto-detecta estado | Nao | Sim | Sim |
@@ -236,7 +250,7 @@ O install.sh e idempotente: remove artefatos legacy, sobrescreve com versao atua
 
 ### Por que dynamic discovery?
 
-> O GSD evolui rapido (v1.25 → v1.28 em semanas). Uma routing table hardcoded diverge silenciosamente — roteia pra comandos que nao existem ou ignora comandos novos. A dynamic discovery elimina esse risco lendo `~/.claude/commands/gsd/*.md` em runtime.
+> O GSD evolui rapido. Uma routing table hardcoded diverge silenciosamente — roteia pra comandos que nao existem ou ignora comandos novos. A dynamic discovery elimina esse risco lendo `~/.claude/commands/gsd/*.md` e `~/.claude/skills/gsd-*/SKILL.md` em runtime.
 
 ### Por que sem arquivo de preferencias separado?
 
