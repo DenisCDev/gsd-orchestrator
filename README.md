@@ -1,12 +1,35 @@
-# GSD Orchestrator (`/g`)
+<h1 align="center">GSD Orchestrator <code>/g</code></h1>
 
-Intelligent orchestrator for [GSD (Get Shit Done)](https://github.com/gsd-build/get-shit-done). Speak naturally to Claude and get maximum GSD efficiency.
+<p align="center">
+  <b>Natural-language orchestrator for GSD — say what you want; it finds and chains the right commands</b><br>
+  <sub><i>"Stand by the grey stone when the thrush knocks..."</i></sub>
+</p>
 
-**[Portugues](#gsd-orchestrator-g-1)** | English
+<p align="center">
+  <img src="https://img.shields.io/badge/commands-discovered%20at%20runtime-43A48E?labelColor=171310" alt="commands discovered at runtime">
+  <img src="https://img.shields.io/badge/routing-zero%20drift-43A48E?labelColor=171310" alt="zero drift routing">
+  <img src="https://img.shields.io/badge/tested%20with-GSD%201.34.2-D4A24E?labelColor=171310" alt="tested with GSD 1.34.2">
+  <img src="https://img.shields.io/badge/license-MIT-D4A24E?labelColor=171310" alt="MIT license">
+</p>
+
+<p align="center">
+  <img src="assets/tolkien-thror-map.jpg" width="480" alt="Thror's Map — the map of the Lonely Mountain with moon-letters, drawn by J.R.R. Tolkien for The Hobbit">
+</p>
+
+> *"Thror's Map"* — J.R.R. Tolkien for **The Hobbit** (1937).
+> The moon-letters only show under the right light: the instructions reveal themselves
+> when you need them, instead of being memorized up front.
+
+> **[Leia em Português](#portugues)**
+
+**GSD ships 57+ commands, and the right one depends on project state you would
+have to check by hand.** `/g` reads the installed command registry and the
+project state at runtime, matches what you said against the real command
+descriptions, and dispatches — one entry point in front of the whole toolbox.
+When GSD updates, new commands appear and removed ones vanish, with zero
+orchestrator maintenance.
 
 ## What it solves
-
-Instead of memorizing 57+ GSD commands and knowing the correct order, you just say what you want:
 
 | You say | Orchestrator executes |
 |---------|----------------------|
@@ -16,7 +39,7 @@ Instead of memorizing 57+ GSD commands and knowing the correct order, you just s
 | "how's the project going?" | Answers directly from pre-loaded data |
 | "do everything automatically" | autonomous |
 
-## Architecture: Dynamic Discovery (zero drift)
+## Architecture: dynamic discovery (zero drift)
 
 Unlike a hardcoded routing table, the orchestrator **discovers commands at runtime**:
 
@@ -41,7 +64,7 @@ SKILL.md                              Workflow
 - Arguments and descriptions reflect the current version
 - Zero orchestrator maintenance
 
-## Differentials vs `/gsd-do` + `/gsd-next`
+## What it adds over `/gsd-do` + `/gsd-next`
 
 | Feature | `/gsd-do` | `/gsd-next` | `/g` |
 |---------|-----------|-------------|------|
@@ -157,25 +180,30 @@ MIT
 
 ---
 
-# GSD Orchestrator (`/g`)
+<a id="portugues"></a>
 
-Orquestrador inteligente para o [GSD (Get Shit Done)](https://github.com/gsd-build/get-shit-done). Fale naturalmente com o Claude e receba a eficiencia maxima do GSD.
+# GSD Orchestrator (`/g`) — PT-BR
 
-**English** | [Portugues](#gsd-orchestrator-g-1)
+**O GSD traz 57+ comandos, e o certo depende de um estado de projeto que você
+teria que checar na mão.** O `/g` lê o registro de comandos instalado e o estado
+do projeto em runtime, compara o que você falou com as descrições reais dos
+comandos e despacha — uma porta de entrada na frente da caixa de ferramentas
+inteira. Quando o GSD atualiza, comandos novos aparecem e removidos somem, com
+zero manutenção no orchestrator.
 
 ## O que resolve
 
-Ao inves de decorar 57+ comandos GSD e saber a ordem correta, voce so fala o que quer:
+Em vez de decorar 57+ comandos GSD e saber a ordem correta, você só fala o que quer:
 
-| Voce fala | Orchestrator executa |
+| Você fala | Orchestrator executa |
 |-----------|---------------------|
 | "continua de onde parei" | Detecta estado → resume-work ou execute-phase |
 | "tem um bug no login" | Avalia complexidade → debug ou quick |
-| "planeja e executa a fase 3" | discuss → plan → execute (sequencia confirmada) |
-| "como ta o projeto?" | Responde direto dos dados pre-carregados |
-| "faz tudo automatico" | autonomous |
+| "planeja e executa a fase 3" | discuss → plan → execute (sequência confirmada) |
+| "como tá o projeto?" | Responde direto dos dados pré-carregados |
+| "faz tudo automático" | autonomous |
 
-## Arquitetura: Dynamic Discovery (zero drift)
+## Arquitetura: dynamic discovery (zero drift)
 
 Diferente de uma routing table hardcoded, o orchestrator **descobre comandos em runtime**:
 
@@ -195,25 +223,25 @@ SKILL.md                              Workflow
 ```
 
 **Quando o GSD atualiza** (npx get-shit-done-cc@latest):
-- Novos comandos aparecem automaticamente no registry
+- Comandos novos aparecem automaticamente no registro
 - Comandos removidos desaparecem
-- Argumentos e descricoes refletem a versao atual
-- Zero manutencao no orchestrator
+- Argumentos e descrições refletem a versão atual
+- Zero manutenção no orchestrator
 
-## Diferenciais vs `/gsd-do` + `/gsd-next`
+## O que ele soma sobre `/gsd-do` + `/gsd-next`
 
 | Feature | `/gsd-do` | `/gsd-next` | `/g` |
 |---------|-----------|-------------|------|
-| Texto livre → comando | Sim | Nao | Sim |
-| Auto-detecta estado | Nao | Sim | Sim |
-| Pre-carrega estado (0 turns) | Nao | Nao | Sim |
-| Encadeia multi-step | Nao | Nao | Sim |
-| Le config.json do GSD | Via workflow | Via workflow | Pre-loaded |
-| Side questions sem comando | Nao | Nao | Sim |
-| Sugere verificacao | Nao | Nao | Sim |
-| Sugere worktrees/screenshots | Nao | Nao | Sim |
+| Texto livre → comando | Sim | Não | Sim |
+| Auto-detecta estado | Não | Sim | Sim |
+| Pré-carrega estado (0 turns) | Não | Não | Sim |
+| Encadeia multi-step | Não | Não | Sim |
+| Lê o config.json do GSD | Via workflow | Via workflow | Pré-carregado |
+| Perguntas paralelas sem comando | Não | Não | Sim |
+| Sugere verificação | Não | Não | Sim |
+| Sugere worktrees/screenshots | Não | Não | Sim |
 
-## Instalacao
+## Instalação
 
 ```bash
 git clone https://github.com/DenisCDev/gsd-orchestrator.git ~/.gsd-orchestrator
@@ -224,14 +252,14 @@ bash install.sh
 ## Uso
 
 ```
-/g quero comecar o app de delivery
+/g quero começar o app de delivery
 /g continua
-/g tem um bug no formulario
+/g tem um bug no formulário
 /g planeja e executa a fase 4
-/g qual fase eu to?
+/g em qual fase eu tô?
 ```
 
-## Atualizacao
+## Atualização
 
 ```bash
 cd ~/.gsd-orchestrator
@@ -239,48 +267,48 @@ git pull
 bash install.sh
 ```
 
-O install.sh e idempotente: remove artefatos legacy, sobrescreve com versao atual.
+O install.sh é idempotente: remove artefatos legados e sobrescreve com a versão atual.
 
-## Pre-requisitos
+## Pré-requisitos
 
 - [Claude Code](https://claude.com/claude-code)
 - [GSD](https://github.com/gsd-build/get-shit-done) instalado (`npx get-shit-done-cc@latest`)
 
-## Decisoes de Arquitetura
+## Decisões de arquitetura
 
 ### Por que dynamic discovery?
 
-> O GSD evolui rapido. Uma routing table hardcoded diverge silenciosamente — roteia pra comandos que nao existem ou ignora comandos novos. A dynamic discovery elimina esse risco lendo `~/.claude/commands/gsd/*.md` e `~/.claude/skills/gsd-*/SKILL.md` em runtime.
+> O GSD evolui rápido. Uma routing table hardcoded diverge silenciosamente — roteia pra comandos que não existem ou ignora comandos novos. A dynamic discovery elimina esse risco lendo `~/.claude/commands/gsd/*.md` e `~/.claude/skills/gsd-*/SKILL.md` em runtime.
 
-### Por que sem arquivo de preferencias separado?
+### Por que sem arquivo de preferências separado?
 
-> O GSD ja tem `.planning/config.json` com settings reais (`skip_discuss`, `auto_advance`, `model_profile`). Manter um `preferences.md` separado cria duas fontes de verdade que podem divergir. O orchestrator le o config.json do GSD diretamente.
+> O GSD já tem o `.planning/config.json` com settings reais (`skip_discuss`, `auto_advance`, `model_profile`). Manter um `preferences.md` separado cria duas fontes de verdade que podem divergir. O orchestrator lê o config.json do GSD diretamente.
 
-### Por que routing semantico em vez de keywords?
+### Por que routing semântico em vez de keywords?
 
-> Claude e um LLM. Ele entende "fix the auth bug" e "tem um bug no login" igualmente bem. Dar a ele a lista de comandos com descricoes e deixar que faca matching semantico funciona em qualquer idioma, sem tabela de keywords.
+> Claude é um LLM. Ele entende "fix the auth bug" e "tem um bug no login" igualmente bem. Dar a ele a lista de comandos com descrições e deixar que faça o matching semântico funciona em qualquer idioma, sem tabela de keywords.
 
-### Context strategy (1M tokens)
+### Estratégia de contexto (1M tokens)
 
-> *"Most best practices are based on one constraint: Claude's context window fills up fast."* Com 1M de contexto, a unica recomendacao e novo chat para feature pesada completamente diferente. Sem /clear, sem /compact.
+> *"Most best practices are based on one constraint: Claude's context window fills up fast."* Com 1M de contexto, a única recomendação é chat novo para uma feature pesada completamente diferente. Sem /clear, sem /compact.
 >
 > — [Claude Code Best Practices](https://code.claude.com/docs/en/best-practices)
 
-### Verificacao como pratica #1
+### Verificação como prática nº 1
 
 > *"Include tests, screenshots, or expected outputs so Claude can check itself. This is the single highest-leverage thing you can do."*
 >
 > — [Claude Code Best Practices](https://code.claude.com/docs/en/best-practices)
 
-### Dynamic context injection
+### Injeção dinâmica de contexto
 
-> Skills usam `!`command`` para executar shell commands antes do conteudo chegar ao Claude.
+> Skills usam `!`command`` para executar comandos de shell antes de o conteúdo chegar ao Claude.
 >
 > — [Extend Claude with Skills](https://code.claude.com/docs/en/skills)
 
 ### Writer/Reviewer com worktrees
 
-> *Uma sessao escreve, outra revisa com contexto fresco.*
+> *Uma sessão escreve, outra revisa com contexto fresco.*
 >
 > — [Common Workflows](https://code.claude.com/docs/en/common-workflows)
 
@@ -296,6 +324,6 @@ O install.sh e idempotente: remove artefatos legacy, sobrescreve com versao atua
 | Common Workflows | https://code.claude.com/docs/en/common-workflows |
 | CLAUDE.md and Memory | https://code.claude.com/docs/en/memory |
 
-## Licenca
+## Licença
 
 MIT
