@@ -1,8 +1,8 @@
 <h1 align="center">GSD Orchestrator <code>/g</code></h1>
 
 <p align="center">
-  <b>Natural-language orchestrator for GSD — say what you want; it finds and chains the right commands</b><br>
-  <sub><i>"Stand by the grey stone when the thrush knocks..."</i></sub>
+  <b>Natural-language orchestrator for GSD: say what you want; it finds and chains the right commands</b><br>
+  <sub><i>one baton in front of 57 instruments</i></sub>
 </p>
 
 <p align="center">
@@ -13,12 +13,12 @@
 </p>
 
 <p align="center">
-  <img src="assets/tolkien-thror-map.jpg" width="480" alt="Thror's Map — the map of the Lonely Mountain with moon-letters, drawn by J.R.R. Tolkien for The Hobbit">
+  <img src="assets/mtg-zaffai.jpg" width="480" alt="Zaffai conducting a magical orchestra, baton of lightning in hand, brass and strings around him. Art by Dmitry Burmak for Magic: The Gathering">
 </p>
 
-> *"Thror's Map"* — J.R.R. Tolkien for **The Hobbit** (1937).
-> The moon-letters only show under the right light: the instructions reveal themselves
-> when you need them, instead of being memorized up front.
+> *"Zaffai, Thunder Conductor"*, art by Dmitry Burmak for **Magic: The Gathering**,
+> Strixhaven Commander (2021). You name the piece; the conductor cues the sections.
+> Nobody in the audience needs to know which instrument comes in when.
 
 > **[Leia em Português](#portugues)**
 
