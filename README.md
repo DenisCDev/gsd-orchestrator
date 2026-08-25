@@ -2,7 +2,7 @@
 
 <p align="center">
   <b>Natural-language orchestrator for GSD: say what you want; it finds and chains the right commands</b><br>
-  <sub><i>one baton in front of 57 instruments</i></sub>
+  <sub><i>one wizard in front of 57 commands</i></sub>
 </p>
 
 <p align="center">
@@ -13,11 +13,11 @@
 </p>
 
 <p align="center">
-  <img src="assets/mtg-zaffai.jpg" width="480" alt="Zaffai conducting a magical orchestra, baton of lightning in hand, brass and strings around him. Art by Dmitry Burmak for Magic: The Gathering">
+  <img src="assets/mtg-gandalf-shire.jpg" width="640" alt="Gandalf with arms raised in the Shire, fireworks taking the shape of eagles — art by Dmitry Burmak, Tales of Middle-earth (2023)">
 </p>
 
-> *"Zaffai, Thunder Conductor"*, art by Dmitry Burmak for **Magic: The Gathering**,
-> Strixhaven Commander (2021). You name the piece; the conductor cues the sections.
+> *"Gandalf, Friend of the Shire"*, printed in Brazil as **"Gandalf, Amigo do Condado"**. Art by Dmitry Burmak for **Magic: The Gathering**,
+> Tales of Middle-earth (2023). You name the piece; the wizard cues the sections.
 > Nobody in the audience needs to know which instrument comes in when.
 
 > **[Leia em Português](#portugues)**
