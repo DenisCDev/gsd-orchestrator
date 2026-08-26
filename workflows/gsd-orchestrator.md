@@ -58,12 +58,24 @@ Store as `$SNAPSHOT`, `$PAUSED`. For Lite, assume `$ROADMAP={}`, `$DEBUG=NONE`, 
 set +H  # disable bash history expansion (breaks awk in some Windows bashes)
 CACHE="$HOME/.cache/gsd-registry.txt"
 mkdir -p "$HOME/.cache"
-NEWER=$(find "$HOME/.claude/commands/gsd" "$HOME/.claude/skills" -maxdepth 2 -name '*.md' -newer "$CACHE" -print -quit 2>/dev/null)
-if [ -f "$CACHE" ] && [ -z "$NEWER" ]; then
+shopt -s nullglob
+files=("$HOME/.claude/commands/gsd/"*.md "$HOME/.claude/skills/gsd-"*/SKILL.md)
+if [ ${#files[@]} -gt 0 ]; then
+  FILE_LIST=$(printf '%s\n' "${files[@]}" | sort)
+else
+  FILE_LIST=""
+fi
+CACHED_LIST=$(cat "$CACHE.files" 2>/dev/null || true)
+NEWER=""
+for file in "${files[@]}"; do
+  if [ ! -f "$CACHE" ] || [ "$file" -nt "$CACHE" ]; then
+    NEWER="$file"
+    break
+  fi
+done
+if [ -f "$CACHE" ] && [ "$FILE_LIST" = "$CACHED_LIST" ] && [ -z "$NEWER" ]; then
   cat "$CACHE"
 else
-  shopt -s nullglob
-  files=("$HOME/.claude/commands/gsd/"*.md "$HOME/.claude/skills/gsd-"*/SKILL.md)
   if [ ${#files[@]} -eq 0 ]; then
     printf 'NO_GSD_COMMANDS\n' | tee "$CACHE"
   else
@@ -75,6 +87,7 @@ else
       END { if (length(name) > 0) print "- /" name " " hint " — " desc }
     ' "${files[@]}" 2>/dev/null | sort -u | tee "$CACHE"
   fi
+  printf '%s' "$FILE_LIST" > "$CACHE.files"
 fi
 ```
 
