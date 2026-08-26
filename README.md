@@ -1,13 +1,12 @@
 <h1 align="center">GSD Orchestrator <code>/g</code></h1>
 
 <p align="center">
-  <b>Natural-language orchestrator for GSD: say what you want; it finds and chains the right commands</b><br>
-  <sub><i>one wizard in front of 57 commands</i></sub>
+  <b>One command that reads GSD and routes your request to the right workflow</b>
 </p>
 
 <p align="center">
   <img src="https://img.shields.io/badge/commands-discovered%20at%20runtime-43A48E?labelColor=171310" alt="commands discovered at runtime">
-  <img src="https://img.shields.io/badge/routing-zero%20drift-43A48E?labelColor=171310" alt="zero drift routing">
+  <img src="https://img.shields.io/badge/routing-installed%20registry-43A48E?labelColor=171310" alt="routing from the installed registry">
   <img src="https://img.shields.io/badge/tested%20with-GSD%201.34.2-D4A24E?labelColor=171310" alt="tested with GSD 1.34.2">
   <img src="https://img.shields.io/badge/license-MIT-D4A24E?labelColor=171310" alt="MIT license">
 </p>
@@ -16,18 +15,18 @@
   <img src="assets/mtg-gandalf-shire.jpg" width="640" alt="Gandalf with arms raised in the Shire, fireworks taking the shape of eagles — art by Dmitry Burmak, Tales of Middle-earth (2023)">
 </p>
 
-> *"Gandalf, Friend of the Shire"*, printed in Brazil as **"Gandalf, Amigo do Condado"**. Art by Dmitry Burmak for **Magic: The Gathering**,
-> Tales of Middle-earth (2023). You name the piece; the wizard cues the sections.
-> Nobody in the audience needs to know which instrument comes in when.
+<p align="center">
+  <sub><i>"share in an adventure"</i><br>
+  — <b>The Hobbit</b>, chapter I · art by Dmitry Burmak for Magic: The Gathering, Tales of Middle-earth (2023)
+</p>
 
 > **[Leia em Português](#portugues)**
 
-**GSD ships 57+ commands, and the right one depends on project state you would
-have to check by hand.** `/g` reads the installed command registry and the
-project state at runtime, matches what you said against the real command
-descriptions, and dispatches — one entry point in front of the whole toolbox.
-When GSD updates, new commands appear and removed ones vanish, with zero
-orchestrator maintenance.
+GSD has more than 57 commands, and the right choice often depends on the current
+project state. `/g` reads the commands installed on your machine, checks that
+state and routes a plain-language request to the matching workflow. It can also
+chain workflows when the task needs more than one step. Changes in the installed
+GSD registry are reflected without maintaining a separate routing table.
 
 ## What it solves
 
@@ -39,9 +38,10 @@ orchestrator maintenance.
 | "how's the project going?" | Answers directly from pre-loaded data |
 | "do everything automatically" | autonomous |
 
-## Architecture: dynamic discovery (zero drift)
+## Architecture: reading the installed registry
 
-Unlike a hardcoded routing table, the orchestrator **discovers commands at runtime**:
+Instead of keeping its own command list, the orchestrator reads the registry
+provided by the installed GSD version:
 
 ```
 SKILL.md                              Workflow
@@ -58,11 +58,11 @@ SKILL.md                              Workflow
 └─────────────────────────┘
 ```
 
-**When GSD updates** (npx get-shit-done-cc@latest):
+**When GSD updates** (`npx get-shit-done-cc@latest`):
 - New commands appear automatically in the registry
 - Removed commands disappear
 - Arguments and descriptions reflect the current version
-- Zero orchestrator maintenance
+- The orchestrator does not need a second command list
 
 ## What it adds over `/gsd-do` + `/gsd-next`
 
@@ -184,16 +184,15 @@ MIT
 
 # GSD Orchestrator (`/g`) — PT-BR
 
-**O GSD traz 57+ comandos, e o certo depende de um estado de projeto que você
-teria que checar na mão.** O `/g` lê o registro de comandos instalado e o estado
-do projeto em runtime, compara o que você falou com as descrições reais dos
-comandos e despacha — uma porta de entrada na frente da caixa de ferramentas
-inteira. Quando o GSD atualiza, comandos novos aparecem e removidos somem, com
-zero manutenção no orchestrator.
+O GSD tem mais de 57 comandos, e a escolha certa costuma depender do estado
+atual do projeto. O `/g` lê os comandos instalados na sua máquina, verifica esse
+estado e encaminha um pedido em linguagem natural para o fluxo correspondente.
+Quando a tarefa exige mais de uma etapa, ele também pode encadear fluxos. As
+mudanças no registro instalado aparecem sem manter uma segunda lista de rotas.
 
 ## O que resolve
 
-Em vez de decorar 57+ comandos GSD e saber a ordem correta, você só fala o que quer:
+Em vez de decorar os comandos e a ordem de cada fluxo, você descreve o que quer:
 
 | Você fala | Orchestrator executa |
 |-----------|---------------------|
@@ -203,9 +202,10 @@ Em vez de decorar 57+ comandos GSD e saber a ordem correta, você só fala o que
 | "como tá o projeto?" | Responde direto dos dados pré-carregados |
 | "faz tudo automático" | autonomous |
 
-## Arquitetura: dynamic discovery (zero drift)
+## Arquitetura: leitura do registro instalado
 
-Diferente de uma routing table hardcoded, o orchestrator **descobre comandos em runtime**:
+Em vez de manter uma lista própria, o orquestrador lê o registro fornecido pela
+versão instalada do GSD:
 
 ```
 SKILL.md                              Workflow
@@ -222,11 +222,11 @@ SKILL.md                              Workflow
 └─────────────────────────┘
 ```
 
-**Quando o GSD atualiza** (npx get-shit-done-cc@latest):
+**Quando o GSD atualiza** (`npx get-shit-done-cc@latest`):
 - Comandos novos aparecem automaticamente no registro
 - Comandos removidos desaparecem
 - Argumentos e descrições refletem a versão atual
-- Zero manutenção no orchestrator
+- O orquestrador não precisa de uma segunda lista de comandos
 
 ## O que ele soma sobre `/gsd-do` + `/gsd-next`
 
