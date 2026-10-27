@@ -1,5 +1,7 @@
 <h1 align="center">GSD Orchestrator <code>/g</code></h1>
 
+<p align="center"><b>English</b> · <a href="README.pt-BR.md">Português</a></p>
+
 <p align="center">
   <b>One command that reads GSD and routes your request to the right workflow</b>
 </p>
